@@ -1,12 +1,24 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Body, Controller, Post } from '@nestjs/common';
+import { MeasureRepository } from './repositories/measure-repository';
+import { MeasureService } from './services/measure.service';
+import { ImageBody } from './dtos/image-body';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private measureRepository: MeasureRepository,
+    private measureService: MeasureService,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Post('upload')
+  async uploadMeasureImage(@Body() body: ImageBody) {
+    await this.measureService.getMeasureByGemini(body);
+    // await this.measureRepository.create();
+
+    return {
+      image_url: 'teste',
+      measure_value: 2,
+      measure_uuid: 'dksajd',
+    };
   }
 }

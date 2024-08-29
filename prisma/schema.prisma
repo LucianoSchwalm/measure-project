@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model Measure{
+  id String @id
+  type String
+  value Int
+  hasConfirmed Boolean
+  datetime DateTime
+  customerId   String
+  imageId      String
+
+  customer     Customer @relation(fields: [customerId], references: [id])
+  image        Image    @relation(fields: [imageId], references: [id])
+}
+
+model Image{
+  id String @id
+  url String
+  base64 String
+
+  measures Measure[]
+}
+
+model Customer{
+  id String @id
+  name String
+
+  measures Measure[]
+}
