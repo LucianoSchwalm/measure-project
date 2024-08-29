@@ -17,23 +17,5 @@ model Measure{
   hasConfirmed Boolean
   datetime DateTime
   customerId   String
-  imageId      String
-
-  customer     Customer @relation(fields: [customerId], references: [id])
-  image        Image    @relation(fields: [imageId], references: [id])
-}
-
-model Image{
-  id String @id
-  url String
-  base64 String
-
-  measures Measure[]
-}
-
-model Customer{
-  id String @id
-  name String
-
-  measures Measure[]
+  imageUrl      String
 }
