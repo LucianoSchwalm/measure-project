@@ -1,5 +1,5 @@
-import { GetMeasureResponse } from 'src/dtos/GetMeasure/get-measure-response';
-import { PostMeasureData } from 'src/dtos/PostMeasure/post-measure-data';
+import { GetMeasureResponse } from 'src/presentation/dtos/GetMeasure/get-measure-response';
+import { PostMeasureData } from 'src/presentation/dtos/PostMeasure/post-measure-data';
 
 export abstract class MeasureRepository {
   abstract findMany(id: string, type: string): Promise<GetMeasureResponse>;

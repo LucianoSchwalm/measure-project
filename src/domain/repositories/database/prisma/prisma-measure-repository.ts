@@ -1,9 +1,9 @@
-import { PrismaService } from 'src/database/prisma.service';
-import { MeasureRepository } from '../measure-repository';
+import { PrismaService } from 'src/domain/services/prisma.service';
+import { MeasureRepository } from '../../measure-repository';
 // import { randomUUID } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { GetMeasureResponse } from 'src/dtos/GetMeasure/get-measure-response';
-import { PostMeasureData } from 'src/dtos/PostMeasure/post-measure-data';
+import { GetMeasureResponse } from 'src/presentation/dtos/GetMeasure/get-measure-response';
+import { PostMeasureData } from 'src/presentation/dtos/PostMeasure/post-measure-data';
 
 @Injectable()
 export class PrismaMeasureRepository implements MeasureRepository {

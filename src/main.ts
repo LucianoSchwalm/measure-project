@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule } from './infraestructure/app.module';
 import { HttpException, ValidationPipe } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
 

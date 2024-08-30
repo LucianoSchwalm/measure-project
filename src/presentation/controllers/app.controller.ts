@@ -7,9 +7,9 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { MeasureService } from './services/measure.service';
-import { ImageBody } from './dtos/UploadMeasure/image-body';
-import { PatchConfirmBody } from './dtos/PatchConfirmMeasure/confirm-body';
+import { MeasureService } from '../../domain/services/measure.service';
+import { ImageBody } from '../dtos/UploadMeasure/image-body';
+import { PatchConfirmBody } from '../dtos/PatchConfirmMeasure/confirm-body';
 
 @Controller()
 export class AppController {
