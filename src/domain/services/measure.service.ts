@@ -24,7 +24,7 @@ export class MeasureService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return await this.measureRepository.findMany(id, type);
+    return await this.measureRepository.findMany(id, type.toUpperCase());
   }
 
   async confirmMeasure(measureUuid: string, confirmedValue: number) {
@@ -34,48 +34,36 @@ export class MeasureService {
     );
   }
 
-  async verifySameMonth(
-    customerCode: string,
-    measureType: string,
-    measureDate: Date,
-  ) {
+  async verifyMeasureByGemini(body: ImageBody): Promise<ImageResponse> {
+    const { image, customer_code, measure_type, measure_datetime } = body;
+    const { model, fileManager } = this.apiRepository.apiConnection();
+    const measureDate = new Date(measure_datetime);
+
     const measures = await this.measureRepository.findMany(
-      customerCode,
-      measureType,
+      customer_code,
+      measure_type,
     );
 
-    const measureSameMonth = measures.measures.find(
-      (dbMeasure) =>
-        dbMeasure.measure_datetime.getMonth() === measureDate.getMonth(),
-    );
+    const measureSameMonth = measures.measures.find((dbMeasure) => {
+      return dbMeasure.measure_datetime.getMonth() === measureDate.getMonth();
+    });
+
     if (measureSameMonth) {
       throw new HttpException(
         { error_code: 'DOUBLE_REPORT', erro: 'Leitura do mês já realizada' },
         HttpStatus.CONFLICT,
       );
     }
-  }
 
-  async uploadImageWithApi(image: string, fileManager: any) {
     const imageBuffer = Buffer.from(image, 'base64');
-    const imgName = 'file';
+    const imgName = 'file1';
     const filePath = join('uploads', `${imgName}.jpg`);
     writeFileSync(filePath, imageBuffer);
+
     const uploadResponse = await fileManager.uploadFile(filePath, {
       mimeType: 'image/jpeg',
       displayName: imgName,
     });
-    return uploadResponse;
-  }
-
-  async verifyMeasureByGemini(body: ImageBody): Promise<ImageResponse> {
-    const { image, customer_code, measure_type, measure_datetime } = body;
-    const { model, fileManager } = this.apiRepository.apiConnection();
-    const measureDate = new Date(measure_datetime);
-
-    this.verifySameMonth(customer_code, measure_type, measureDate);
-
-    const uploadResponse = await this.uploadImageWithApi(image, fileManager);
 
     const result = await model.generateContent([
       {

@@ -5,6 +5,8 @@ import { MeasureRepository } from '../domain/repositories/measure-repository';
 import { PrismaMeasureRepository } from '../domain/repositories/database/prisma/prisma-measure-repository';
 import { MeasureService } from '../domain/services/measure.service';
 import { ConfigModule } from '@nestjs/config';
+import { ApiRepository } from 'src/domain/repositories/api-repository';
+import { GeminiRepository } from 'src/domain/repositories/api/gemini-repository';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
@@ -12,6 +14,7 @@ import { ConfigModule } from '@nestjs/config';
   providers: [
     PrismaService,
     { provide: MeasureRepository, useClass: PrismaMeasureRepository },
+    { provide: ApiRepository, useClass: GeminiRepository },
     MeasureService,
   ],
 })

@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ApiRepository } from '../api-repository';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GoogleAIFileManager } from '@google/generative-ai/dist/server/server';
+import { GoogleAIFileManager } from '@google/generative-ai/server';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GeminiRepository implements ApiRepository {
-  configService: any;
+  constructor(private configService: ConfigService) {}
+
   apiConnection(): any {
     const genAI = new GoogleGenerativeAI(
       this.configService.get('GEMINI_API_KEY'),
