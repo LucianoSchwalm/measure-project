@@ -13,7 +13,7 @@ datasource db {
 model Measure{
   id String @id
   type String
-  value Int
+  value Float
   hasConfirmed Boolean
   datetime DateTime
   customerId   String

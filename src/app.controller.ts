@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { MeasureService } from './services/measure.service';
-import { ImageBody } from './dtos/image-body';
+import { ImageBody } from './dtos/UploadMeasure/image-body';
+import { PatchConfirmBody } from './dtos/PatchConfirmMeasure/confirm-body';
 
 @Controller()
 export class AppController {
@@ -8,20 +17,25 @@ export class AppController {
 
   @Post('upload')
   async uploadMeasureImage(@Body() body: ImageBody) {
-    await this.measureService.verifyMeasureByGemini(body);
-    // await this.measureRepository.create();
-
-    return {
-      image_url: 'teste',
-      measure_value: 2,
-      measure_uuid: 'dksajd',
-    };
+    return await this.measureService.verifyMeasureByGemini(body);
   }
+
   @Get(':id/list')
   async getMeasureList(
     @Param('id') id: string,
     @Query('measure_type') type: string,
   ) {
-    await this.measureService.getMeasure(id, type);
+    return await this.measureService.getMeasure(id, type);
+  }
+
+  @Patch('confirm')
+  async patchConfirmMeasure(@Body() body: PatchConfirmBody) {
+    await this.measureService.confirmMeasure(
+      body.measure_uuid,
+      body.confirmed_value,
+    );
+    return {
+      success: true,
+    };
   }
 }

@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { GoogleAIFileManager } from '@google/generative-ai/server';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
-import { ImageBody } from 'src/dtos/image-body';
+import { ImageBody } from 'src/dtos/UploadMeasure/image-body';
 import { MeasureRepository } from 'src/repositories/measure-repository';
+import { randomUUID } from 'crypto';
+import { join } from 'path';
+import { writeFileSync } from 'fs';
+import { ImageResponse } from 'src/dtos/UploadMeasure/image-response';
 
 @Injectable()
 export class MeasureService {
@@ -11,55 +16,101 @@ export class MeasureService {
     private measureRepository: MeasureRepository,
   ) {}
 
-  async verifyMeasureByGemini(body: ImageBody) {
-    const { image, customer_code, measure_type, measure_datetime } = body;
-
+  startGeminiAcess() {
     const genAI = new GoogleGenerativeAI(
+      this.configService.get('GEMINI_API_KEY'),
+    );
+
+    const fileManager = new GoogleAIFileManager(
       this.configService.get('GEMINI_API_KEY'),
     );
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-pro',
     });
+    return { fileManager, model };
+  }
+
+  async getMeasure(id: string, type: string) {
+    if (type.toUpperCase() !== 'WATER' && type.toUpperCase() !== 'GAS') {
+      throw new HttpException(
+        {
+          error_code: 'INVALID_TYPE',
+          error: 'Tipo de medição não permitida',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return await this.measureRepository.findMany(id, type);
+  }
+
+  async confirmMeasure(measureUuid: string, confirmedValue: number) {
+    return await this.measureRepository.updateConfirmation(
+      measureUuid,
+      confirmedValue,
+    );
+  }
+
+  async verifyMeasureByGemini(body: ImageBody): Promise<ImageResponse> {
+    const { image, customer_code, measure_type, measure_datetime } = body;
+    const { model, fileManager } = this.startGeminiAcess();
+    const measureDate = new Date(measure_datetime);
 
     const measures = await this.measureRepository.findMany(
       customer_code,
       measure_type,
     );
 
-    let alreadyRead = false;
+    const measureSameMonth = measures.measures.find(
+      (dbMeasure) =>
+        dbMeasure.measure_datetime.getMonth() === measureDate.getMonth(),
+    );
 
-    measures.measures.map((dbMeasure) => {
-      if (
-        dbMeasure.measure_datetime.getMonth() === measure_datetime.getMonth()
-      ) {
-        alreadyRead = true;
-      }
-    });
-
-    if (alreadyRead) {
-      return { message: 'This month already has a measurement reading' };
+    if (measureSameMonth) {
+      throw new HttpException(
+        { error_code: 'DOUBLE_REPORT', erro: 'Leitura do mês já realizada' },
+        HttpStatus.CONFLICT,
+      );
     }
 
-    const imageBuffer = Buffer.from(image, 'base64').toString('base64');
+    const imageBuffer = Buffer.from(image, 'base64');
+    const imgName = `${customer_code.concat(measure_type, measureDate.toISOString().split('T')[0]).replaceAll('-', '')}`;
+    const filePath = join('uploads', `${imgName}.jpg`);
+    writeFileSync(filePath, imageBuffer);
+
+    const uploadResponse = await fileManager.uploadFile(filePath, {
+      mimeType: 'image/jpeg',
+      displayName: imgName,
+    });
 
     const result = await model.generateContent([
       {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: imageBuffer,
+        fileData: {
+          mimeType: uploadResponse.file.mimeType,
+          fileUri: uploadResponse.file.uri,
         },
       },
       {
-        text: 'Qual o valor total da conta?',
+        text: 'Qual o valor total da conta? Responda somente com o valor numérico. Exemplo de resposta: 42.15',
       },
     ]);
-    const response = await result.response;
-    const text = response.text();
-    console.log(text);
-  }
+    const measureValue = parseFloat(result.response.text());
+    const id = randomUUID();
 
-  async getMeasure(id: string, type: string) {
-    await this.measureRepository.findMany(id, type);
+    await this.measureRepository.create({
+      id,
+      datetime: measureDate,
+      hasConfirmed: false,
+      value: measureValue,
+      type: measure_type,
+      imageUrl: uploadResponse.file.uri,
+      customerId: customer_code,
+    });
+
+    return {
+      image_url: uploadResponse.file.uri,
+      measure_value: measureValue,
+      measure_uuid: id,
+    };
   }
 }
