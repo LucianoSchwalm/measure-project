@@ -14,7 +14,7 @@ export class ImageBody {
   @IsDate()
   measure_datetime: Date;
   @IsNotEmpty()
-  @Transform(({ value }) => value.toUpperCase())
+  @Transform(({ value }) => value?.toUpperCase())
   @IsIn(['WATER', 'GAS'])
   measure_type: MeasureType;
 }

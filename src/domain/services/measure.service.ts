@@ -15,7 +15,11 @@ export class MeasureService {
   ) {}
 
   async getMeasure(id: string, type: string) {
-    if (type.toUpperCase() !== 'WATER' && type.toUpperCase() !== 'GAS') {
+    if (
+      type?.toUpperCase() !== 'WATER' &&
+      type?.toUpperCase() !== 'GAS' &&
+      type !== undefined
+    ) {
       throw new HttpException(
         {
           error_code: 'INVALID_TYPE',
@@ -24,7 +28,8 @@ export class MeasureService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return await this.measureRepository.findMany(id, type.toUpperCase());
+
+    return await this.measureRepository.findMany(id, type?.toUpperCase());
   }
 
   async confirmMeasure(measureUuid: string, confirmedValue: number) {
